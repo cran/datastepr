@@ -1,0 +1,11 @@
+d758398bcdeb16713c175390a35dd7ce *DESCRIPTION
+2945229c45b61918ada5fd2b943e35cd *NAMESPACE
+3ff7ac873808e2ba299ebebc2ce25f37 *R/datastepr.R
+3d125a16c7411958567ce141ccb463b2 *build/vignette.rds
+e9a0805a145f6495035a325910acd208 *inst/doc/datastepping.R
+e3abf04f45fa97744fb51e5dc81a45c0 *inst/doc/datastepping.Rmd
+9daafecc12ace8fcef359b295d5510dc *inst/doc/datastepping.html
+8d9f28e030dab43d76e037bdfb219de9 *man/dataStepClass.Rd
+f583897187bfa9f6c1d402425fe75678 *man/toDf.Rd
+fdb6c1ea465c582ff24e0596edce7723 *man/toEnv.Rd
+e3abf04f45fa97744fb51e5dc81a45c0 *vignettes/datastepping.Rmd
