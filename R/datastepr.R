@@ -35,14 +35,13 @@ toEnv = function(object, environment)
 #' @return An appended dataframe
 #' 
 #' @examples
-#' toDf(list(a = 1, b = 2), data.frame())
+#' toDf(list(a = 1, b = 2, data.frame()), data.frame())
 #' toDf(environment(), data.frame())
 toDf = function(object, dataframe)
-  append =
-    object %>%
+  object %>%
     as.list %>%
-    rlist::list.filter(is.vector(.)) %>%
-    as.data.frame %>%
+    Filter(is.vector, .) %>%
+    tibble::as_tibble() %>%
     dplyr::bind_rows(dataframe, .)
   
   #' An implementation of a SAS datastep in a class
@@ -71,7 +70,7 @@ toDf = function(object, dataframe)
   #'   
   #' \describe{\item{\code{eval}}{
   #'     \code{eval} is initialized as NULL, but will store a pointer to 
-  #' the current evaluation environment. This pointer is helps pass the evaluation 
+  #' the current evaluation environment. This pointer helps pass the evaluation 
   #' environment from one iteration of the data step to the next.}}
   #'
   #' @section Methods:
@@ -83,7 +82,7 @@ toDf = function(object, dataframe)
   #' typically be set to \code{environment()}.}}
   #' 
   #' \describe{\item{\code{set(dataframe, group_id)}}{
-  #'     \code{set} takes two arguments: a data frame and an onptional unquoted \code{group_id} 
+  #'     \code{set} takes two arguments: a data frame and an optional unquoted \code{group_id} 
   #' variable. This \code{group_id} variable must contain a consecutive sequence of natural 
   #' numbers from 1 to some maximum. In each data step, rows where \code{i} matches the 
   #' \code{group_id} variable (or simply the ith row if no group_id variable is given) are selected, 
@@ -144,20 +143,13 @@ toDf = function(object, dataframe)
           slice = dataframe %>% dplyr::slice(self$i)
           max = nrow(dataframe) 
         } else {
-          #do some lazy interpretation
-          filter = 
-            lazyeval::lazy(group_id == self$i) %>%
-            lazyeval::interp(group_id = group_id)
-          
-          #add dataframe slice to the environment
-          slice =
-            dataframe %>%
-            dplyr::filter_(filter)
-          
-          max = 
-            lazyeval::lazy(max(dataframe$group_id)) %>%
-            lazyeval::interp(group_id = group_id) %>%
-            lazyeval::lazy_eval()
+          lazyeval::lazy({slice = 
+                            dataframe %>%
+                            dplyr::filter(test_id == self$i) %>%
+                            dplyr::select(-test_id)
+                          max = max(dataframe$test_id)}) %>%
+          lazyeval::interp(test_id = group_id) %>%
+          lazyeval::lazy_eval()
         }
         
         slice %>% toEnv(self$eval)

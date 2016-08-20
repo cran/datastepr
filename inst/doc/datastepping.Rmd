@@ -9,12 +9,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-First, let's import `dplyr` and `magrittr` (because they're useful), `knitr` (for table output), and, of course, `datastepr`.
+First, import `datastepr`.
 ```{r, message=FALSE}
-library(dplyr)
 library(datastepr)
-library(magrittr)
-library(knitr)
 ```
 
 The basic idea behind this package was inspired by SAS data steps. In each step, the environment is populated by a slice of data from a data frame. Then, operations are performed. The environment is whole-sale appended to a `results` data frame. Then, the datastep repeats.
@@ -35,47 +32,36 @@ Please read the dataStepClass documentation before continuing, which is extensiv
 Our example will be Euler's method for solving differential equations. In fact, it is unimportant if you understand the method itself. The differential equation to be solved is given below:
 $$ \dfrac{dy}{dx} = xy $$
 
-First, we will set initial values. The x values are the series of x values over which the method will be applied, and the group_id marks the order in which values will be input into the datastep. In this case, the first set of input x's will be c(0, 5) and the second set will be c(1, 6). The grouping allows us to evaluate two separate series in parallel, one from 0-4 (in the top position), and one from 5-9 (in the bottom position).
+First, we will set initial values. The x values are the series of x values over which the method will be applied.
 
 ```{r}
-xFrame = data.frame(x = 0:9, group_id = 1:5)
-kable(xFrame %>% arrange(group_id))
+xFrame = data.frame(x = 0:9)
 ```
 
 
-Our initial y values will only be for the first iteration of the data-step, and thus, we set the `group_id` to 1.
+Our initial y value will only be for the first iteration of the data-step.
 ```{r}
-yFrame = data.frame(y = c(-1, 1), group_id = 1)
-kable(yFrame)
+y_initial = data.frame(y = 1)
 ```
 
-Now here is our stair function. First, `begin` is called, setting up an evaluation environment in the function's `environment()`. Next,  each of our two series (in the top and bottom positions) get a unique initial `y` value: `-1` and `1` respectively (only in the first step). Note, importantly, that without another set call later (or a manual override of continue), the data step would only run once. A lag of x is stored in all but the first step. This is important, because after the `set` call, x is overwritten using a slice of the dataframe above. Then, a new y is estimated using the new x, the lag of x, and the derivative estimate (in all but the first step). Next, a derivative is estimated (see equation above). Finally, we output each of our two series twice. In the first output, `y` is exported, but in the second output, y squared is exported. This is purely to show that output called be called as many times as necessary, and in any position in the datastep. In fact, this is also the case for `set`.
+Now here is our stair function. First, `begin` is called, setting up an evaluation environment in the function's `environment()`. Next,  only in the first step,
+initialize y. Note, importantly, that without another set call later (or a manual override of continue), the data step would only run once. A lag of x is stored in all but the first step. This is important, because after the `set` call, x is overwritten using a slice of the dataframe above. Then, a new y is estimated using the new x, the lag of x, and the derivative estimate (in all but the first step). Next, a derivative is estimated (see equation above). Finally, we output the results.
 
 ```{r}
 stairs = function(...) {
   step$begin(environment())
 
-  if (step$i == 1) step$set(yFrame, group_id)
+  if (step$i == 1) step$set(y_initial)
 
   if (step$i > 1) lagx = x
 
-  step$set(xFrame, group_id)
+  step$set(xFrame)
   
   if (step$i > 1) y = y + dydx*(x - lagx)
  
   dydx = x*y
-
-  series_id = c(1, 2)
   
-  step$output(list(
-    result = y,
-    type = "y",
-    series_id = series_id))
-  
-  step$output(list(
-    result = y^2,
-    type = "y squared",
-    series_id = series_id))
+  step$output()
   
   step$end(stairs)
 }
@@ -86,7 +72,5 @@ stairs()
 Let's take a look at our results!
 
 ```{r}
-step$results %>%
-  arrange(series_id, type) %>%
-  kable
+knitr::kable(step$results)
 ```

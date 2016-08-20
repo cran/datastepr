@@ -1,8 +1,5 @@
 ## ---- message=FALSE------------------------------------------------------
-library(dplyr)
 library(datastepr)
-library(magrittr)
-library(knitr)
 
 ## ------------------------------------------------------------------------
 step = dataStepClass$new()
@@ -11,38 +8,26 @@ step = dataStepClass$new()
 ?dataStepClass()
 
 ## ------------------------------------------------------------------------
-xFrame = data.frame(x = 0:9, group_id = 1:5)
-kable(xFrame %>% arrange(group_id))
+xFrame = data.frame(x = 0:9)
 
 ## ------------------------------------------------------------------------
-yFrame = data.frame(y = c(-1, 1), group_id = 1)
-kable(yFrame)
+y_initial = data.frame(y = 1)
 
 ## ------------------------------------------------------------------------
 stairs = function(...) {
   step$begin(environment())
 
-  if (step$i == 1) step$set(yFrame, group_id)
+  if (step$i == 1) step$set(y_initial)
 
   if (step$i > 1) lagx = x
 
-  step$set(xFrame, group_id)
+  step$set(xFrame)
   
   if (step$i > 1) y = y + dydx*(x - lagx)
  
   dydx = x*y
-
-  series_id = c(1, 2)
   
-  step$output(list(
-    result = y,
-    type = "y",
-    series_id = series_id))
-  
-  step$output(list(
-    result = y^2,
-    type = "y squared",
-    series_id = series_id))
+  step$output()
   
   step$end(stairs)
 }
@@ -50,7 +35,5 @@ stairs = function(...) {
 stairs()
 
 ## ------------------------------------------------------------------------
-step$results %>%
-  arrange(series_id, type) %>%
-  kable
+knitr::kable(step$results)
 
